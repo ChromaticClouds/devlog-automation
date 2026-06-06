@@ -49,6 +49,12 @@ describe("fetchRecentPullRequests", () => {
         title: "closed without merging",
         state: "closed",
       },
+      {
+        ...pullRequestResponse,
+        number: 1,
+        title: "pull request by a deleted user",
+        user: null,
+      },
     ]);
 
     await expect(fetchRecentPullRequests(repository, 5)).resolves.toEqual([
@@ -77,6 +83,16 @@ describe("fetchRecentPullRequests", () => {
         title: "closed without merging",
         state: "closed",
         authorLogin: "ChromaticClouds",
+        createdAt: "2026-06-06T07:50:00Z",
+        updatedAt: "2026-06-06T08:00:00Z",
+        mergedAt: null,
+        url: "https://github.com/ChromaticClouds/devlog-automation/pull/4",
+      },
+      {
+        number: 1,
+        title: "pull request by a deleted user",
+        state: "open",
+        authorLogin: null,
         createdAt: "2026-06-06T07:50:00Z",
         updatedAt: "2026-06-06T08:00:00Z",
         mergedAt: null,
@@ -113,7 +129,7 @@ describe("fetchRecentPullRequests", () => {
     { pullRequests: {} },
     [{ ...pullRequestResponse, number: "4" }],
     [{ ...pullRequestResponse, state: "merged" }],
-    [{ ...pullRequestResponse, user: null }],
+    [{ ...pullRequestResponse, user: { login: 123 } }],
     [{ ...pullRequestResponse, merged_at: 123 }],
   ])("rejects malformed provider response %#", async (response) => {
     vi.mocked(requestGitHub).mockResolvedValue(response);

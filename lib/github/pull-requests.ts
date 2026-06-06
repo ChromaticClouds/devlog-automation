@@ -8,7 +8,7 @@ export type GitHubPullRequest = {
   number: number;
   title: string;
   state: "open" | "closed";
-  authorLogin: string;
+  authorLogin: string | null;
   createdAt: string;
   updatedAt: string;
   mergedAt: string | null;
@@ -21,7 +21,7 @@ type GitHubPullRequestResponse = {
   state: "open" | "closed";
   user: {
     login: string;
-  };
+  } | null;
   created_at: string;
   updated_at: string;
   merged_at: string | null;
@@ -42,7 +42,7 @@ function isGitHubPullRequestResponse(
     Number.isInteger(Reflect.get(value, "number")) &&
     typeof Reflect.get(value, "title") === "string" &&
     (state === "open" || state === "closed") &&
-    isGitHubUser(Reflect.get(value, "user")) &&
+    isNullableGitHubUser(Reflect.get(value, "user")) &&
     typeof Reflect.get(value, "created_at") === "string" &&
     typeof Reflect.get(value, "updated_at") === "string" &&
     (typeof mergedAt === "string" || mergedAt === null) &&
@@ -50,11 +50,12 @@ function isGitHubPullRequestResponse(
   );
 }
 
-function isGitHubUser(value: unknown): value is { login: string } {
+function isNullableGitHubUser(value: unknown): value is { login: string } | null {
   return (
-    !!value &&
-    typeof value === "object" &&
-    typeof Reflect.get(value, "login") === "string"
+    value === null ||
+    (!!value &&
+      typeof value === "object" &&
+      typeof Reflect.get(value, "login") === "string")
   );
 }
 
@@ -109,7 +110,7 @@ export async function fetchRecentPullRequests(
       number,
       title,
       state,
-      authorLogin: user.login,
+      authorLogin: user?.login ?? null,
       createdAt: created_at,
       updatedAt: updated_at,
       mergedAt: merged_at,

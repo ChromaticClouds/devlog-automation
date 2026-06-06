@@ -22,8 +22,8 @@ Fetch and normalize recent pull requests for a parsed public GitHub repository.
 
 - A parsed repository can be used to request recent pull requests.
 - Requests include `state=all`, `sort=updated`, `direction=desc`, and `per_page`.
-- Number, title, state, author login, timestamps, merged date, and URL are
-  normalized.
+- Number, title, state, nullable author login, timestamps, merged date, and URL
+  are normalized.
 - Open, closed-unmerged, and merged pull requests can be distinguished.
 - Empty responses return an empty array.
 - Invalid limits and malformed provider responses fail safely.
