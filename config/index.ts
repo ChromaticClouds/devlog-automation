@@ -6,6 +6,7 @@ export const config = {
   NODE_ENV: process.env.NODE_ENV,
   DATABASE_URL: process.env.DATABASE_URL,
   GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+  GEMINI_MODEL: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash",
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
 };
