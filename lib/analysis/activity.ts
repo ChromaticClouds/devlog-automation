@@ -1,0 +1,355 @@
+import type { GitHubCommit } from "../github/commits";
+import type { GitHubIssue } from "../github/issues";
+import type { GitHubPackageMetadata } from "../github/package-metadata";
+import type { GitHubPullRequest } from "../github/pull-requests";
+import type { GitHubReadme } from "../github/readme";
+import type { GitHubRepository } from "../github/repository-url";
+
+export const MAX_NORMALIZED_COMMITS = 20;
+export const MAX_NORMALIZED_PULL_REQUESTS = 20;
+export const MAX_NORMALIZED_ISSUES = 20;
+export const MAX_README_EXCERPT_LENGTH = 4000;
+export const MAX_COMMIT_MESSAGE_LENGTH = 500;
+export const MAX_COMMIT_AUTHOR_LENGTH = 100;
+export const MAX_ISSUE_LABELS = 10;
+export const MAX_PACKAGE_ENTRY_LENGTH = 100;
+export const MAX_PACKAGE_DESCRIPTION_LENGTH = 500;
+export const MAX_PACKAGE_COLLECTION_ITEMS = 20;
+
+export type NormalizeGitHubActivityInput = {
+  repository: GitHubRepository;
+  commits: GitHubCommit[];
+  pullRequests: GitHubPullRequest[];
+  issues: GitHubIssue[];
+  readme: GitHubReadme | null;
+  packageMetadata: GitHubPackageMetadata | null;
+};
+
+export type NormalizedRepositorySummary = {
+  owner: string;
+  name: string;
+  url: string;
+};
+
+export type NormalizedCommitSummary = {
+  sha: string;
+  message: string;
+  authorName: string;
+  committedAt: string;
+  url: string;
+};
+
+export type NormalizedPullRequestSummary = {
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  isMerged: boolean;
+  authorLogin: string | null;
+  createdAt: string;
+  updatedAt: string;
+  mergedAt: string | null;
+  url: string;
+};
+
+export type NormalizedIssueSummary = {
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  authorLogin: string | null;
+  labels: string[];
+  createdAt: string;
+  updatedAt: string;
+  closedAt: string | null;
+  url: string;
+};
+
+export type NormalizedReadmeSummary = {
+  path: string;
+  excerpt: string;
+  url: string;
+  isTruncated: boolean;
+} | null;
+
+export type NormalizedPackageSummary = {
+  name: string | null;
+  version: string | null;
+  description: string | null;
+  packageManager: string | null;
+  engineConstraints: GitHubPackageMetadata["engineConstraints"];
+  scriptNames: string[];
+  dependencyNames: string[];
+  devDependencyNames: string[];
+} | null;
+
+export type NormalizedActivityStats = {
+  commitCount: number;
+  pullRequestCount: number;
+  openPullRequestCount: number;
+  closedPullRequestCount: number;
+  mergedPullRequestCount: number;
+  issueCount: number;
+  openIssueCount: number;
+  closedIssueCount: number;
+  scriptCount: number;
+  dependencyCount: number;
+  devDependencyCount: number;
+};
+
+export type NormalizedGitHubActivity = {
+  repository: NormalizedRepositorySummary;
+  stats: NormalizedActivityStats;
+  commits: NormalizedCommitSummary[];
+  pullRequests: NormalizedPullRequestSummary[];
+  issues: NormalizedIssueSummary[];
+  readme: NormalizedReadmeSummary;
+  packageMetadata: NormalizedPackageSummary;
+};
+
+function trimText(value: string): string {
+  return value.trim();
+}
+
+function trimNullableText(value: string | null): string | null {
+  if (value === null) {
+    return null;
+  }
+
+  const trimmed = trimText(value);
+
+  return trimmed || null;
+}
+
+function truncateText(value: string, maxLength: number): {
+  text: string;
+  isTruncated: boolean;
+} {
+  if (value.length <= maxLength) {
+    return { text: value, isTruncated: false };
+  }
+
+  return {
+    text: value.slice(0, maxLength),
+    isTruncated: true,
+  };
+}
+
+function truncateNullableText(value: string | null, maxLength: number): string | null {
+  if (value === null) {
+    return null;
+  }
+
+  return truncateText(value, maxLength).text;
+}
+
+function trimTruncateAndCapList(
+  values: string[],
+  maxItems: number,
+  maxLength: number,
+): string[] {
+  return values
+    .map(trimText)
+    .filter(Boolean)
+    .map((value) => truncateText(value, maxLength).text)
+    .slice(0, maxItems);
+}
+
+function normalizeCommits(commits: GitHubCommit[]): NormalizedCommitSummary[] {
+  return commits
+    .map((commit) => ({
+      sha: trimText(commit.sha),
+      message: truncateText(
+        trimText(commit.message),
+        MAX_COMMIT_MESSAGE_LENGTH,
+      ).text,
+      authorName: truncateText(
+        trimText(commit.authorName),
+        MAX_COMMIT_AUTHOR_LENGTH,
+      ).text,
+      committedAt: trimText(commit.committedAt),
+      url: trimText(commit.url),
+    }))
+    .filter(
+      (commit) =>
+        commit.sha &&
+        commit.message &&
+        commit.authorName &&
+        commit.committedAt &&
+        commit.url,
+    )
+    .slice(0, MAX_NORMALIZED_COMMITS);
+}
+
+function normalizePullRequests(
+  pullRequests: GitHubPullRequest[],
+): NormalizedPullRequestSummary[] {
+  return pullRequests
+    .map((pullRequest) => {
+      const mergedAt = trimNullableText(pullRequest.mergedAt);
+
+      return {
+        number: pullRequest.number,
+        title: trimText(pullRequest.title),
+        state: pullRequest.state,
+        isMerged: mergedAt !== null,
+        authorLogin: trimNullableText(pullRequest.authorLogin),
+        createdAt: trimText(pullRequest.createdAt),
+        updatedAt: trimText(pullRequest.updatedAt),
+        mergedAt,
+        url: trimText(pullRequest.url),
+      };
+    })
+    .filter(
+      (pullRequest) =>
+        pullRequest.title &&
+        pullRequest.createdAt &&
+        pullRequest.updatedAt &&
+        pullRequest.url,
+    )
+    .slice(0, MAX_NORMALIZED_PULL_REQUESTS);
+}
+
+function normalizeIssues(issues: GitHubIssue[]): NormalizedIssueSummary[] {
+  return issues
+    .map((issue) => ({
+      number: issue.number,
+      title: trimText(issue.title),
+      state: issue.state,
+      authorLogin: trimNullableText(issue.authorLogin),
+      labels: trimTruncateAndCapList(
+        issue.labels,
+        MAX_ISSUE_LABELS,
+        MAX_PACKAGE_ENTRY_LENGTH,
+      ),
+      createdAt: trimText(issue.createdAt),
+      updatedAt: trimText(issue.updatedAt),
+      closedAt: trimNullableText(issue.closedAt),
+      url: trimText(issue.url),
+    }))
+    .filter((issue) => issue.title && issue.createdAt && issue.updatedAt && issue.url)
+    .slice(0, MAX_NORMALIZED_ISSUES);
+}
+
+function normalizeReadme(readme: GitHubReadme | null): NormalizedReadmeSummary {
+  if (readme === null) {
+    return null;
+  }
+
+  const { text, isTruncated } = truncateText(
+    trimText(readme.content),
+    MAX_README_EXCERPT_LENGTH,
+  );
+
+  return {
+    path: trimText(readme.path),
+    excerpt: text,
+    url: trimText(readme.url),
+    isTruncated,
+  };
+}
+
+function normalizePackageMetadata(
+  packageMetadata: GitHubPackageMetadata | null,
+): NormalizedPackageSummary {
+  if (packageMetadata === null) {
+    return null;
+  }
+
+  return {
+    name: truncateNullableText(
+      trimNullableText(packageMetadata.name),
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
+    version: truncateNullableText(
+      trimNullableText(packageMetadata.version),
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
+    description: truncateNullableText(
+      trimNullableText(packageMetadata.description),
+      MAX_PACKAGE_DESCRIPTION_LENGTH,
+    ),
+    packageManager: truncateNullableText(
+      trimNullableText(packageMetadata.packageManager),
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
+    engineConstraints: packageMetadata.engineConstraints
+      .map((engine) => ({
+        name: trimText(engine.name),
+        constraint: truncateText(
+          trimText(engine.constraint),
+          MAX_PACKAGE_ENTRY_LENGTH,
+        ).text,
+      }))
+      .filter((engine) => engine.name && engine.constraint)
+      .map((engine) => ({
+        name: truncateText(engine.name, MAX_PACKAGE_ENTRY_LENGTH).text,
+        constraint: engine.constraint,
+      }))
+      .slice(0, MAX_PACKAGE_COLLECTION_ITEMS),
+    scriptNames: trimTruncateAndCapList(
+      packageMetadata.scriptNames,
+      MAX_PACKAGE_COLLECTION_ITEMS,
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
+    dependencyNames: trimTruncateAndCapList(
+      packageMetadata.dependencyNames,
+      MAX_PACKAGE_COLLECTION_ITEMS,
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
+    devDependencyNames: trimTruncateAndCapList(
+      packageMetadata.devDependencyNames,
+      MAX_PACKAGE_COLLECTION_ITEMS,
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
+  };
+}
+
+function getStats(
+  commits: NormalizedCommitSummary[],
+  pullRequests: NormalizedPullRequestSummary[],
+  issues: NormalizedIssueSummary[],
+  packageMetadata: NormalizedPackageSummary,
+): NormalizedActivityStats {
+  return {
+    commitCount: commits.length,
+    pullRequestCount: pullRequests.length,
+    openPullRequestCount: pullRequests.filter(
+      (pullRequest) => pullRequest.state === "open",
+    ).length,
+    closedPullRequestCount: pullRequests.filter(
+      (pullRequest) => pullRequest.state === "closed",
+    ).length,
+    mergedPullRequestCount: pullRequests.filter(
+      (pullRequest) => pullRequest.isMerged,
+    ).length,
+    issueCount: issues.length,
+    openIssueCount: issues.filter((issue) => issue.state === "open").length,
+    closedIssueCount: issues.filter((issue) => issue.state === "closed").length,
+    scriptCount: packageMetadata?.scriptNames.length ?? 0,
+    dependencyCount: packageMetadata?.dependencyNames.length ?? 0,
+    devDependencyCount: packageMetadata?.devDependencyNames.length ?? 0,
+  };
+}
+
+export function normalizeGitHubActivity(
+  input: NormalizeGitHubActivityInput,
+): NormalizedGitHubActivity {
+  const commits = normalizeCommits(input.commits);
+  const pullRequests = normalizePullRequests(input.pullRequests);
+  const issues = normalizeIssues(input.issues);
+  const readme = normalizeReadme(input.readme);
+  const packageMetadata = normalizePackageMetadata(input.packageMetadata);
+
+  return {
+    repository: {
+      owner: trimText(input.repository.owner),
+      name: trimText(input.repository.name),
+      url: trimText(input.repository.url),
+    },
+    stats: getStats(commits, pullRequests, issues, packageMetadata),
+    commits,
+    pullRequests,
+    issues,
+    readme,
+    packageMetadata,
+  };
+}
