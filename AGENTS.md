@@ -70,6 +70,10 @@ Examples:
 5. Do not introduce new libraries without explaining why.
 6. Do not commit secrets, `.env` files, tokens, API keys, or local DB files.
 7. Do not push unless explicitly instructed.
+8. When a source file exceeds 200 lines, or a change would push it past 200
+   lines, prefer splitting focused types, helpers, or tests into separate files.
+   Keep an oversized file only when the split would reduce clarity, and explain
+   the exception in the task or PR notes.
 
 ## Verification Commands
 
