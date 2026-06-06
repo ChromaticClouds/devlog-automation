@@ -154,9 +154,10 @@ describe("sendActivityToGemini", () => {
   it("fails safely when the API key is missing", async () => {
     const { client, generateContent } = createFakeClient();
 
-    await expect(
-      sendActivityToGemini(activity, { apiKey: "", client }),
-    ).rejects.toMatchObject<GeminiAnalysisError>({
+    const request = sendActivityToGemini(activity, { apiKey: "", client });
+
+    await expect(request).rejects.toBeInstanceOf(GeminiAnalysisError);
+    await expect(request).rejects.toMatchObject({
       category: "configuration_error",
       message: "Gemini API configuration is missing.",
     });
@@ -174,7 +175,8 @@ describe("sendActivityToGemini", () => {
       client,
     });
 
-    await expect(request).rejects.toMatchObject<GeminiAnalysisError>({
+    await expect(request).rejects.toBeInstanceOf(GeminiAnalysisError);
+    await expect(request).rejects.toMatchObject({
       category: "provider_error",
       message: "Gemini analysis request failed.",
     });
