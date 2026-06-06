@@ -7,10 +7,15 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
+import {
+  CopyMarkdownButton,
+  type CopyMarkdownTextWriter,
+} from "@/components/analysis/copy-markdown-button";
 import { AnalysisResultList } from "@/components/analysis/analysis-result-list";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -29,11 +34,13 @@ import type { GitHubRepository } from "@/lib/github/repository-url";
 export type AnalysisResultDashboardProps = {
   repository: GitHubRepository;
   result: AnalysisResult | null;
+  copyMarkdownText?: CopyMarkdownTextWriter;
 };
 
 export function AnalysisResultDashboard({
   repository,
   result,
+  copyMarkdownText,
 }: AnalysisResultDashboardProps) {
   if (result === null) {
     return (
@@ -142,6 +149,12 @@ export function AnalysisResultDashboard({
           <CardDescription>
             Plain text preview. Markdown and HTML are not interpreted.
           </CardDescription>
+          <CardAction>
+            <CopyMarkdownButton
+              markdown={result.markdown}
+              writeText={copyMarkdownText}
+            />
+          </CardAction>
         </CardHeader>
         <CardContent>
           <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-4 font-mono text-sm leading-6">

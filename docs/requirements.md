@@ -23,6 +23,12 @@ DevLog Automator collects GitHub repository activity and generates reusable deve
 | FR-013 | The system provides manual automation test execution. |
 | FR-014 | The system records automation logs. |
 
+## Implementation Order
+
+FR IDs define stable product requirements, not a strict implementation order.
+Follow `docs/implementation-flow.md` for the task sequence, technical gates, and
+integration work required between functional requirements.
+
 ## UI States
 
 Each major UI component should support:
