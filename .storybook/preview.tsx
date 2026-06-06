@@ -1,6 +1,14 @@
 import type { Preview } from '@storybook/nextjs-vite'
+import '../app/globals.css'
 
 const preview: Preview = {
+  decorators: [
+    (Story) => (
+      <div style={{ fontFamily: "Inter, Arial, sans-serif" }}>
+        <Story />
+      </div>
+    ),
+  ],
   parameters: {
     controls: {
       matchers: {
