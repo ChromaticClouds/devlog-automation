@@ -34,6 +34,7 @@ later Gemini processing.
 - Package descriptions are truncated to `MAX_PACKAGE_DESCRIPTION_LENGTH`.
 - Package metadata collections are capped at `MAX_PACKAGE_COLLECTION_ITEMS`.
 - Package metadata entry text is truncated to `MAX_PACKAGE_ENTRY_LENGTH`.
+- Package metadata scalar fields are truncated to `MAX_PACKAGE_ENTRY_LENGTH`.
 - Commit messages and titles are trimmed and empty entries are omitted safely.
 - Provider-specific raw response shapes do not leak.
 - Missing README and package metadata are represented as `null`.

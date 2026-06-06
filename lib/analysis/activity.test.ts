@@ -289,10 +289,10 @@ describe("normalizeGitHubActivity", () => {
       issues: [],
       readme: null,
       packageMetadata: {
-        name: "repo",
-        version: "1.0.0",
+        name: "r".repeat(MAX_PACKAGE_ENTRY_LENGTH + 10),
+        version: "1".repeat(MAX_PACKAGE_ENTRY_LENGTH + 10),
         description: "d".repeat(MAX_PACKAGE_DESCRIPTION_LENGTH + 10),
-        packageManager: "pnpm@11",
+        packageManager: "p".repeat(MAX_PACKAGE_ENTRY_LENGTH + 10),
         engineConstraints: Array.from(
           { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
           (_, index) => ({
@@ -321,6 +321,15 @@ describe("normalizeGitHubActivity", () => {
     );
     expect(activity.packageMetadata?.description).toHaveLength(
       MAX_PACKAGE_DESCRIPTION_LENGTH,
+    );
+    expect(activity.packageMetadata?.name).toHaveLength(
+      MAX_PACKAGE_ENTRY_LENGTH,
+    );
+    expect(activity.packageMetadata?.version).toHaveLength(
+      MAX_PACKAGE_ENTRY_LENGTH,
+    );
+    expect(activity.packageMetadata?.packageManager).toHaveLength(
+      MAX_PACKAGE_ENTRY_LENGTH,
     );
     expect(activity.packageMetadata?.engineConstraints).toHaveLength(
       MAX_PACKAGE_COLLECTION_ITEMS,

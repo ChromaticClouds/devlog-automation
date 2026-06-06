@@ -255,13 +255,22 @@ function normalizePackageMetadata(
   }
 
   return {
-    name: trimNullableText(packageMetadata.name),
-    version: trimNullableText(packageMetadata.version),
+    name: truncateNullableText(
+      trimNullableText(packageMetadata.name),
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
+    version: truncateNullableText(
+      trimNullableText(packageMetadata.version),
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
     description: truncateNullableText(
       trimNullableText(packageMetadata.description),
       MAX_PACKAGE_DESCRIPTION_LENGTH,
     ),
-    packageManager: trimNullableText(packageMetadata.packageManager),
+    packageManager: truncateNullableText(
+      trimNullableText(packageMetadata.packageManager),
+      MAX_PACKAGE_ENTRY_LENGTH,
+    ),
     engineConstraints: packageMetadata.engineConstraints
       .map((engine) => ({
         name: trimText(engine.name),
