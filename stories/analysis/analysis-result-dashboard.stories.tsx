@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, within } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 
 import { AnalysisResultDashboard } from "@/components/analysis/analysis-result-dashboard";
 
@@ -8,6 +8,8 @@ import {
   repositoryFixture,
   sparseAnalysisResultFixture,
 } from "./analysis-result-dashboard.fixture";
+
+const dashboardWriteText = fn(async () => undefined);
 
 const meta = {
   title: "Analysis/Analysis Result Dashboard",
@@ -26,6 +28,7 @@ const meta = {
   args: {
     repository: repositoryFixture,
     result: fullAnalysisResultFixture,
+    copyMarkdownText: dashboardWriteText,
   },
 } satisfies Meta<typeof AnalysisResultDashboard>;
 
@@ -34,6 +37,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Success: Story = {
   play: async ({ canvasElement }) => {
+    dashboardWriteText.mockClear();
     const canvas = within(canvasElement);
 
     await expect(
@@ -52,6 +56,13 @@ export const Success: Story = {
     await expect(repositoryLink).toHaveAttribute("rel", "noopener noreferrer");
     await expect(canvas.getByText(/alert\('not executed'\)/)).toBeInTheDocument();
     await expect(canvasElement.querySelector("script")).toBeNull();
+
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Copy Markdown" }),
+    );
+    await expect(dashboardWriteText).toHaveBeenCalledWith(
+      fullAnalysisResultFixture.markdown,
+    );
   },
 };
 
@@ -87,5 +98,8 @@ export const NoResult: Story = {
     await expect(
       canvas.getByText("No analysis result yet"),
     ).toBeInTheDocument();
+    await expect(
+      canvas.queryByRole("button", { name: /copy markdown/i }),
+    ).not.toBeInTheDocument();
   },
 };
