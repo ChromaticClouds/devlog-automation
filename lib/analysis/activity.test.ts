@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  MAX_COMMIT_AUTHOR_LENGTH,
   MAX_COMMIT_MESSAGE_LENGTH,
+  MAX_ISSUE_LABELS,
   MAX_NORMALIZED_COMMITS,
   MAX_NORMALIZED_ISSUES,
   MAX_NORMALIZED_PULL_REQUESTS,
   MAX_PACKAGE_COLLECTION_ITEMS,
   MAX_PACKAGE_DESCRIPTION_LENGTH,
+  MAX_PACKAGE_ENTRY_LENGTH,
   MAX_README_EXCERPT_LENGTH,
   normalizeGitHubActivity,
 } from "./activity";
@@ -75,7 +78,7 @@ describe("normalizeGitHubActivity", () => {
           title: " feat(analysis): normalize github activity ",
           state: "open",
           authorLogin: " ChromaticClouds ",
-          labels: [" feature ", "", " analysis "],
+          labels: [" feature ", "", " analysis ", "x".repeat(MAX_PACKAGE_ENTRY_LENGTH + 1)],
           createdAt: " 2026-06-06T10:00:00Z ",
           updatedAt: " 2026-06-06T10:15:00Z ",
           closedAt: null,
@@ -168,7 +171,7 @@ describe("normalizeGitHubActivity", () => {
         {
           number: 12,
           title: "feat(analysis): normalize github activity",
-          labels: ["feature", "analysis"],
+          labels: ["feature", "analysis", "x".repeat(MAX_PACKAGE_ENTRY_LENGTH)],
           closedAt: null,
         },
         {
@@ -277,7 +280,7 @@ describe("normalizeGitHubActivity", () => {
         {
           sha: "abc",
           message: "m".repeat(MAX_COMMIT_MESSAGE_LENGTH + 10),
-          authorName: "author",
+          authorName: "a".repeat(MAX_COMMIT_AUTHOR_LENGTH + 10),
           committedAt: "2026-06-06T08:00:00Z",
           url: "https://github.com/commit/abc",
         },
@@ -293,26 +296,29 @@ describe("normalizeGitHubActivity", () => {
         engineConstraints: Array.from(
           { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
           (_, index) => ({
-            name: `engine-${index}`,
-            constraint: ">=1",
+            name: `${"engine".repeat(30)}-${index}`,
+            constraint: `${">=1".repeat(50)}-${index}`,
           }),
         ),
         scriptNames: Array.from(
           { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
-          (_, index) => `script-${index}`,
+          (_, index) => `${"script".repeat(30)}-${index}`,
         ),
         dependencyNames: Array.from(
           { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
-          (_, index) => `dependency-${index}`,
+          (_, index) => `${"dependency".repeat(30)}-${index}`,
         ),
         devDependencyNames: Array.from(
           { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
-          (_, index) => `dev-dependency-${index}`,
+          (_, index) => `${"dev-dependency".repeat(30)}-${index}`,
         ),
       },
     });
 
     expect(activity.commits[0].message).toHaveLength(MAX_COMMIT_MESSAGE_LENGTH);
+    expect(activity.commits[0].authorName).toHaveLength(
+      MAX_COMMIT_AUTHOR_LENGTH,
+    );
     expect(activity.packageMetadata?.description).toHaveLength(
       MAX_PACKAGE_DESCRIPTION_LENGTH,
     );
@@ -331,6 +337,49 @@ describe("normalizeGitHubActivity", () => {
     expect(activity.stats.scriptCount).toBe(MAX_PACKAGE_COLLECTION_ITEMS);
     expect(activity.stats.dependencyCount).toBe(MAX_PACKAGE_COLLECTION_ITEMS);
     expect(activity.stats.devDependencyCount).toBe(MAX_PACKAGE_COLLECTION_ITEMS);
+    expect(activity.packageMetadata?.engineConstraints[0].name).toHaveLength(
+      MAX_PACKAGE_ENTRY_LENGTH,
+    );
+    expect(
+      activity.packageMetadata?.engineConstraints[0].constraint,
+    ).toHaveLength(MAX_PACKAGE_ENTRY_LENGTH);
+    expect(activity.packageMetadata?.scriptNames[0]).toHaveLength(
+      MAX_PACKAGE_ENTRY_LENGTH,
+    );
+    expect(activity.packageMetadata?.dependencyNames[0]).toHaveLength(
+      MAX_PACKAGE_ENTRY_LENGTH,
+    );
+    expect(activity.packageMetadata?.devDependencyNames[0]).toHaveLength(
+      MAX_PACKAGE_ENTRY_LENGTH,
+    );
+  });
+
+  it("caps issue labels per issue", () => {
+    const activity = normalizeGitHubActivity({
+      repository,
+      commits: [],
+      pullRequests: [],
+      issues: [
+        {
+          number: 1,
+          title: "issue",
+          state: "open",
+          authorLogin: null,
+          labels: Array.from({ length: MAX_ISSUE_LABELS + 1 }, (_, index) =>
+            `${"label".repeat(30)}-${index}`,
+          ),
+          createdAt: "2026-06-06T08:00:00Z",
+          updatedAt: "2026-06-06T08:00:00Z",
+          closedAt: null,
+          url: "https://github.com/issues/1",
+        },
+      ],
+      readme: null,
+      packageMetadata: null,
+    });
+
+    expect(activity.issues[0].labels).toHaveLength(MAX_ISSUE_LABELS);
+    expect(activity.issues[0].labels[0]).toHaveLength(MAX_PACKAGE_ENTRY_LENGTH);
   });
 
   it("does not expose provider-specific raw response fields", () => {

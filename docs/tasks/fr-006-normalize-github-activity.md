@@ -29,8 +29,11 @@ later Gemini processing.
 - Issue open and closed counts are deterministic.
 - README content is truncated to `MAX_README_EXCERPT_LENGTH`.
 - Commit messages are truncated to `MAX_COMMIT_MESSAGE_LENGTH`.
+- Commit author names are truncated to `MAX_COMMIT_AUTHOR_LENGTH`.
+- Issue labels are capped at `MAX_ISSUE_LABELS` per Issue.
 - Package descriptions are truncated to `MAX_PACKAGE_DESCRIPTION_LENGTH`.
 - Package metadata collections are capped at `MAX_PACKAGE_COLLECTION_ITEMS`.
+- Package metadata entry text is truncated to `MAX_PACKAGE_ENTRY_LENGTH`.
 - Commit messages and titles are trimmed and empty entries are omitted safely.
 - Provider-specific raw response shapes do not leak.
 - Missing README and package metadata are represented as `null`.

@@ -10,6 +10,9 @@ export const MAX_NORMALIZED_PULL_REQUESTS = 20;
 export const MAX_NORMALIZED_ISSUES = 20;
 export const MAX_README_EXCERPT_LENGTH = 4000;
 export const MAX_COMMIT_MESSAGE_LENGTH = 500;
+export const MAX_COMMIT_AUTHOR_LENGTH = 100;
+export const MAX_ISSUE_LABELS = 10;
+export const MAX_PACKAGE_ENTRY_LENGTH = 100;
 export const MAX_PACKAGE_DESCRIPTION_LENGTH = 500;
 export const MAX_PACKAGE_COLLECTION_ITEMS = 20;
 
@@ -116,10 +119,6 @@ function trimNullableText(value: string | null): string | null {
   return trimmed || null;
 }
 
-function trimLabels(labels: string[]): string[] {
-  return labels.map(trimText).filter(Boolean);
-}
-
 function truncateText(value: string, maxLength: number): {
   text: string;
   isTruncated: boolean;
@@ -142,8 +141,16 @@ function truncateNullableText(value: string | null, maxLength: number): string |
   return truncateText(value, maxLength).text;
 }
 
-function trimAndCapList(values: string[], maxItems: number): string[] {
-  return trimLabels(values).slice(0, maxItems);
+function trimTruncateAndCapList(
+  values: string[],
+  maxItems: number,
+  maxLength: number,
+): string[] {
+  return values
+    .map(trimText)
+    .filter(Boolean)
+    .map((value) => truncateText(value, maxLength).text)
+    .slice(0, maxItems);
 }
 
 function normalizeCommits(commits: GitHubCommit[]): NormalizedCommitSummary[] {
@@ -154,7 +161,10 @@ function normalizeCommits(commits: GitHubCommit[]): NormalizedCommitSummary[] {
         trimText(commit.message),
         MAX_COMMIT_MESSAGE_LENGTH,
       ).text,
-      authorName: trimText(commit.authorName),
+      authorName: truncateText(
+        trimText(commit.authorName),
+        MAX_COMMIT_AUTHOR_LENGTH,
+      ).text,
       committedAt: trimText(commit.committedAt),
       url: trimText(commit.url),
     }))
@@ -205,7 +215,11 @@ function normalizeIssues(issues: GitHubIssue[]): NormalizedIssueSummary[] {
       title: trimText(issue.title),
       state: issue.state,
       authorLogin: trimNullableText(issue.authorLogin),
-      labels: trimLabels(issue.labels),
+      labels: trimTruncateAndCapList(
+        issue.labels,
+        MAX_ISSUE_LABELS,
+        MAX_PACKAGE_ENTRY_LENGTH,
+      ),
       createdAt: trimText(issue.createdAt),
       updatedAt: trimText(issue.updatedAt),
       closedAt: trimNullableText(issue.closedAt),
@@ -251,21 +265,31 @@ function normalizePackageMetadata(
     engineConstraints: packageMetadata.engineConstraints
       .map((engine) => ({
         name: trimText(engine.name),
-        constraint: trimText(engine.constraint),
+        constraint: truncateText(
+          trimText(engine.constraint),
+          MAX_PACKAGE_ENTRY_LENGTH,
+        ).text,
       }))
       .filter((engine) => engine.name && engine.constraint)
+      .map((engine) => ({
+        name: truncateText(engine.name, MAX_PACKAGE_ENTRY_LENGTH).text,
+        constraint: engine.constraint,
+      }))
       .slice(0, MAX_PACKAGE_COLLECTION_ITEMS),
-    scriptNames: trimAndCapList(
+    scriptNames: trimTruncateAndCapList(
       packageMetadata.scriptNames,
       MAX_PACKAGE_COLLECTION_ITEMS,
+      MAX_PACKAGE_ENTRY_LENGTH,
     ),
-    dependencyNames: trimAndCapList(
+    dependencyNames: trimTruncateAndCapList(
       packageMetadata.dependencyNames,
       MAX_PACKAGE_COLLECTION_ITEMS,
+      MAX_PACKAGE_ENTRY_LENGTH,
     ),
-    devDependencyNames: trimAndCapList(
+    devDependencyNames: trimTruncateAndCapList(
       packageMetadata.devDependencyNames,
       MAX_PACKAGE_COLLECTION_ITEMS,
+      MAX_PACKAGE_ENTRY_LENGTH,
     ),
   };
 }
