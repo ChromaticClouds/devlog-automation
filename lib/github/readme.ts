@@ -1,5 +1,6 @@
 import type { GitHubRepository } from "./repository-url";
 import { GitHubClientError, requestGitHub } from "./client";
+import { decodeGitHubBase64Content } from "./contents";
 
 export type GitHubReadme = {
   path: string;
@@ -25,21 +26,6 @@ function isGitHubReadmeResponse(value: unknown): value is GitHubReadmeResponse {
   );
 }
 
-function decodeBase64(content: string): string {
-  const normalized = content.replace(/\s/g, "");
-
-  if (
-    normalized.length % 4 !== 0 ||
-    !/^(?:[A-Za-z\d+/]{4})*(?:[A-Za-z\d+/]{2}==|[A-Za-z\d+/]{3}=)?$/.test(
-      normalized,
-    )
-  ) {
-    throw new Error("Invalid Base64 content.");
-  }
-
-  return Buffer.from(normalized, "base64").toString("utf8");
-}
-
 export async function fetchRepositoryReadme(
   repository: Pick<GitHubRepository, "owner" | "name">,
 ): Promise<GitHubReadme | null> {
@@ -55,7 +41,7 @@ export async function fetchRepositoryReadme(
 
     return {
       path: response.path,
-      content: decodeBase64(response.content),
+      content: decodeGitHubBase64Content(response.content),
       url: response.html_url,
     };
   } catch (error) {
