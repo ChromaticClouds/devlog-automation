@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  MAX_COMMIT_MESSAGE_LENGTH,
   MAX_NORMALIZED_COMMITS,
   MAX_NORMALIZED_ISSUES,
   MAX_NORMALIZED_PULL_REQUESTS,
+  MAX_PACKAGE_COLLECTION_ITEMS,
+  MAX_PACKAGE_DESCRIPTION_LENGTH,
   MAX_README_EXCERPT_LENGTH,
   normalizeGitHubActivity,
 } from "./activity";
@@ -54,6 +57,16 @@ describe("normalizeGitHubActivity", () => {
           updatedAt: " 2026-06-06T08:30:00Z ",
           mergedAt: null,
           url: " https://github.com/pull/7 ",
+        },
+        {
+          number: 8,
+          title: " closed but not merged ",
+          state: "closed",
+          authorLogin: " ChromaticClouds ",
+          createdAt: " 2026-06-06T08:00:00Z ",
+          updatedAt: " 2026-06-06T08:30:00Z ",
+          mergedAt: "   ",
+          url: " https://github.com/pull/8 ",
         },
       ],
       issues: [
@@ -108,9 +121,9 @@ describe("normalizeGitHubActivity", () => {
       },
       stats: {
         commitCount: 1,
-        pullRequestCount: 2,
+        pullRequestCount: 3,
         openPullRequestCount: 1,
-        closedPullRequestCount: 1,
+        closedPullRequestCount: 2,
         mergedPullRequestCount: 1,
         issueCount: 2,
         openIssueCount: 1,
@@ -142,6 +155,12 @@ describe("normalizeGitHubActivity", () => {
           state: "open",
           isMerged: false,
           authorLogin: null,
+          mergedAt: null,
+        },
+        {
+          number: 8,
+          state: "closed",
+          isMerged: false,
           mergedAt: null,
         },
       ],
@@ -249,6 +268,69 @@ describe("normalizeGitHubActivity", () => {
     expect(activity.stats.commitCount).toBe(MAX_NORMALIZED_COMMITS);
     expect(activity.stats.pullRequestCount).toBe(MAX_NORMALIZED_PULL_REQUESTS);
     expect(activity.stats.issueCount).toBe(MAX_NORMALIZED_ISSUES);
+  });
+
+  it("caps prompt-facing package metadata collections and text fields", () => {
+    const activity = normalizeGitHubActivity({
+      repository,
+      commits: [
+        {
+          sha: "abc",
+          message: "m".repeat(MAX_COMMIT_MESSAGE_LENGTH + 10),
+          authorName: "author",
+          committedAt: "2026-06-06T08:00:00Z",
+          url: "https://github.com/commit/abc",
+        },
+      ],
+      pullRequests: [],
+      issues: [],
+      readme: null,
+      packageMetadata: {
+        name: "repo",
+        version: "1.0.0",
+        description: "d".repeat(MAX_PACKAGE_DESCRIPTION_LENGTH + 10),
+        packageManager: "pnpm@11",
+        engineConstraints: Array.from(
+          { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
+          (_, index) => ({
+            name: `engine-${index}`,
+            constraint: ">=1",
+          }),
+        ),
+        scriptNames: Array.from(
+          { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
+          (_, index) => `script-${index}`,
+        ),
+        dependencyNames: Array.from(
+          { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
+          (_, index) => `dependency-${index}`,
+        ),
+        devDependencyNames: Array.from(
+          { length: MAX_PACKAGE_COLLECTION_ITEMS + 1 },
+          (_, index) => `dev-dependency-${index}`,
+        ),
+      },
+    });
+
+    expect(activity.commits[0].message).toHaveLength(MAX_COMMIT_MESSAGE_LENGTH);
+    expect(activity.packageMetadata?.description).toHaveLength(
+      MAX_PACKAGE_DESCRIPTION_LENGTH,
+    );
+    expect(activity.packageMetadata?.engineConstraints).toHaveLength(
+      MAX_PACKAGE_COLLECTION_ITEMS,
+    );
+    expect(activity.packageMetadata?.scriptNames).toHaveLength(
+      MAX_PACKAGE_COLLECTION_ITEMS,
+    );
+    expect(activity.packageMetadata?.dependencyNames).toHaveLength(
+      MAX_PACKAGE_COLLECTION_ITEMS,
+    );
+    expect(activity.packageMetadata?.devDependencyNames).toHaveLength(
+      MAX_PACKAGE_COLLECTION_ITEMS,
+    );
+    expect(activity.stats.scriptCount).toBe(MAX_PACKAGE_COLLECTION_ITEMS);
+    expect(activity.stats.dependencyCount).toBe(MAX_PACKAGE_COLLECTION_ITEMS);
+    expect(activity.stats.devDependencyCount).toBe(MAX_PACKAGE_COLLECTION_ITEMS);
   });
 
   it("does not expose provider-specific raw response fields", () => {

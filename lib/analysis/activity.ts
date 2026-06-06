@@ -9,6 +9,9 @@ export const MAX_NORMALIZED_COMMITS = 20;
 export const MAX_NORMALIZED_PULL_REQUESTS = 20;
 export const MAX_NORMALIZED_ISSUES = 20;
 export const MAX_README_EXCERPT_LENGTH = 4000;
+export const MAX_COMMIT_MESSAGE_LENGTH = 500;
+export const MAX_PACKAGE_DESCRIPTION_LENGTH = 500;
+export const MAX_PACKAGE_COLLECTION_ITEMS = 20;
 
 export type NormalizeGitHubActivityInput = {
   repository: GitHubRepository;
@@ -131,11 +134,26 @@ function truncateText(value: string, maxLength: number): {
   };
 }
 
+function truncateNullableText(value: string | null, maxLength: number): string | null {
+  if (value === null) {
+    return null;
+  }
+
+  return truncateText(value, maxLength).text;
+}
+
+function trimAndCapList(values: string[], maxItems: number): string[] {
+  return trimLabels(values).slice(0, maxItems);
+}
+
 function normalizeCommits(commits: GitHubCommit[]): NormalizedCommitSummary[] {
   return commits
     .map((commit) => ({
       sha: trimText(commit.sha),
-      message: trimText(commit.message),
+      message: truncateText(
+        trimText(commit.message),
+        MAX_COMMIT_MESSAGE_LENGTH,
+      ).text,
       authorName: trimText(commit.authorName),
       committedAt: trimText(commit.committedAt),
       url: trimText(commit.url),
@@ -155,17 +173,21 @@ function normalizePullRequests(
   pullRequests: GitHubPullRequest[],
 ): NormalizedPullRequestSummary[] {
   return pullRequests
-    .map((pullRequest) => ({
-      number: pullRequest.number,
-      title: trimText(pullRequest.title),
-      state: pullRequest.state,
-      isMerged: pullRequest.mergedAt !== null,
-      authorLogin: trimNullableText(pullRequest.authorLogin),
-      createdAt: trimText(pullRequest.createdAt),
-      updatedAt: trimText(pullRequest.updatedAt),
-      mergedAt: trimNullableText(pullRequest.mergedAt),
-      url: trimText(pullRequest.url),
-    }))
+    .map((pullRequest) => {
+      const mergedAt = trimNullableText(pullRequest.mergedAt);
+
+      return {
+        number: pullRequest.number,
+        title: trimText(pullRequest.title),
+        state: pullRequest.state,
+        isMerged: mergedAt !== null,
+        authorLogin: trimNullableText(pullRequest.authorLogin),
+        createdAt: trimText(pullRequest.createdAt),
+        updatedAt: trimText(pullRequest.updatedAt),
+        mergedAt,
+        url: trimText(pullRequest.url),
+      };
+    })
     .filter(
       (pullRequest) =>
         pullRequest.title &&
@@ -221,17 +243,30 @@ function normalizePackageMetadata(
   return {
     name: trimNullableText(packageMetadata.name),
     version: trimNullableText(packageMetadata.version),
-    description: trimNullableText(packageMetadata.description),
+    description: truncateNullableText(
+      trimNullableText(packageMetadata.description),
+      MAX_PACKAGE_DESCRIPTION_LENGTH,
+    ),
     packageManager: trimNullableText(packageMetadata.packageManager),
     engineConstraints: packageMetadata.engineConstraints
       .map((engine) => ({
         name: trimText(engine.name),
         constraint: trimText(engine.constraint),
       }))
-      .filter((engine) => engine.name && engine.constraint),
-    scriptNames: trimLabels(packageMetadata.scriptNames),
-    dependencyNames: trimLabels(packageMetadata.dependencyNames),
-    devDependencyNames: trimLabels(packageMetadata.devDependencyNames),
+      .filter((engine) => engine.name && engine.constraint)
+      .slice(0, MAX_PACKAGE_COLLECTION_ITEMS),
+    scriptNames: trimAndCapList(
+      packageMetadata.scriptNames,
+      MAX_PACKAGE_COLLECTION_ITEMS,
+    ),
+    dependencyNames: trimAndCapList(
+      packageMetadata.dependencyNames,
+      MAX_PACKAGE_COLLECTION_ITEMS,
+    ),
+    devDependencyNames: trimAndCapList(
+      packageMetadata.devDependencyNames,
+      MAX_PACKAGE_COLLECTION_ITEMS,
+    ),
   };
 }
 
