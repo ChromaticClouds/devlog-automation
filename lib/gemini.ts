@@ -1,9 +1,9 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, type GenerateContentParameters } from "@google/genai";
 
-export type GeminiGenerateContentRequest = {
-  model: string;
-  contents: string;
-};
+export type GeminiGenerateContentRequest = Pick<
+  GenerateContentParameters,
+  "model" | "contents" | "config"
+>;
 
 export type GeminiGenerateContentResponse = {
   text?: string;
