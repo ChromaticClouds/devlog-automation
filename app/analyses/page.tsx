@@ -12,13 +12,12 @@ export default function AnalysesPage() {
             Revisit previous repository analyses.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-            Browse saved DevLog Automator results and open previous repository
-            summaries when you need reusable notes, portfolio bullets, or next
-            task context.
+            Browse saved DevLog Automator summaries when you need reusable
+            notes, portfolio bullets, or next task context.
           </p>
         </div>
 
-        <AnalysisHistoryContainer />
+        <AnalysisHistoryContainer showDetailLinks={false} />
       </section>
     </main>
   );
