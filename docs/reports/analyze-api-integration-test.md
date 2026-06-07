@@ -28,6 +28,8 @@ are included in this report.
 | Non-string `repoUrl` | `400` safe request message | `400` safe request message | Pass |
 | Extra request field | `400` safe request message | `400` safe request message | Pass |
 | Invalid repository URL | `400` safe URL message | `400` safe URL message | Pass |
+| Unsupported `GET` method | `405` JSON error | `405` JSON error | Pass |
+| Unsupported `OPTIONS` method | `405` JSON error | `405` JSON error | Pass |
 | Valid public repository | `200` stored result | `200` stored result | Pass |
 
 Observed safe error messages:
@@ -39,6 +41,14 @@ Observed safe error messages:
 ```json
 { "message": "GitHub repository URL is invalid." }
 ```
+
+Unsupported methods returned:
+
+```json
+{ "message": "Method not allowed." }
+```
+
+The observed unsupported-method responses included `Allow: POST`.
 
 ## Successful Response Checks
 
@@ -62,6 +72,8 @@ POST /api/analyze 400
 POST /api/analyze 400
 POST /api/analyze 400
 POST /api/analyze 400
+GET /api/analyze 405
+OPTIONS /api/analyze 405
 POST /api/analyze 200 in 10.6s
 ```
 

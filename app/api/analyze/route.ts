@@ -33,6 +33,11 @@ const INVALID_REQUEST_RESPONSE = {
   status: 400,
 };
 
+const METHOD_NOT_ALLOWED_RESPONSE = {
+  message: "Method not allowed.",
+  status: 405,
+};
+
 type AnalyzeRepository = (repoUrl: string) => Promise<StoredAnalysisResult>;
 
 function getRepoUrl(body: unknown): string | null {
@@ -88,3 +93,20 @@ export function createAnalyzePostHandler(analyze: AnalyzeRepository) {
 }
 
 export const POST = createAnalyzePostHandler(orchestrateRepositoryAnalysis);
+
+function methodNotAllowed(): NextResponse {
+  return NextResponse.json(
+    { message: METHOD_NOT_ALLOWED_RESPONSE.message },
+    {
+      status: METHOD_NOT_ALLOWED_RESPONSE.status,
+      headers: { Allow: "POST" },
+    },
+  );
+}
+
+export const GET = methodNotAllowed;
+export const HEAD = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;
+export const OPTIONS = methodNotAllowed;

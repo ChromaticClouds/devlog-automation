@@ -5,7 +5,15 @@ import {
   type RepositoryAnalysisErrorCategory,
 } from "../../../lib/analysis/orchestration";
 import type { StoredAnalysisResult } from "../../../lib/analysis/persistence";
-import { createAnalyzePostHandler } from "./route";
+import {
+  createAnalyzePostHandler,
+  DELETE,
+  GET,
+  HEAD,
+  OPTIONS,
+  PATCH,
+  PUT,
+} from "./route";
 
 const repoUrl = "https://github.com/ChromaticClouds/devlog-automation";
 const storedResult: StoredAnalysisResult = {
@@ -102,5 +110,22 @@ describe("POST /api/analyze", () => {
     expect(response.status).toBe(500);
     expect(body).toEqual({ message: "Repository analysis failed." });
     expect(JSON.stringify(body)).not.toContain("secret");
+  });
+});
+
+describe("unsupported /api/analyze methods", () => {
+  it.each([
+    ["GET", GET],
+    ["HEAD", HEAD],
+    ["PUT", PUT],
+    ["PATCH", PATCH],
+    ["DELETE", DELETE],
+    ["OPTIONS", OPTIONS],
+  ])("returns a predictable JSON 405 for %s", async (_, handler) => {
+    const response = handler();
+
+    expect(response.status).toBe(405);
+    expect(response.headers.get("allow")).toBe("POST");
+    expect(await response.json()).toEqual({ message: "Method not allowed." });
   });
 });

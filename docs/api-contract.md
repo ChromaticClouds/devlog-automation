@@ -103,6 +103,18 @@ Invalid repository URLs use:
 }
 ```
 
+### Error Response (`405 Method Not Allowed`)
+
+Unsupported methods return:
+
+```json
+{
+  "message": "Method not allowed."
+}
+```
+
+The response includes `Allow: POST`.
+
 ## GET /api/analyses
 
 Get analysis history.
