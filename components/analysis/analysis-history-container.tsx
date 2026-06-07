@@ -16,6 +16,7 @@ export type { FetchAnalysisHistoryClient } from "./analysis-history-client";
 
 export type AnalysisHistoryContainerProps = {
   fetchHistory?: FetchAnalysisHistoryClient;
+  showDetailLinks?: boolean;
 };
 
 function errorState(error: unknown): AnalysisHistoryState {
@@ -30,6 +31,7 @@ function errorState(error: unknown): AnalysisHistoryState {
 
 export function AnalysisHistoryContainer({
   fetchHistory = fetchAnalysisHistory,
+  showDetailLinks = true,
 }: AnalysisHistoryContainerProps) {
   const [state, setState] = useState<AnalysisHistoryState>({
     status: "loading",
@@ -71,5 +73,11 @@ export function AnalysisHistoryContainer({
     };
   }, [fetchHistory]);
 
-  return <AnalysisHistoryList onRetry={retryHistory} state={state} />;
+  return (
+    <AnalysisHistoryList
+      onRetry={retryHistory}
+      showDetailLinks={showDetailLinks}
+      state={state}
+    />
+  );
 }
