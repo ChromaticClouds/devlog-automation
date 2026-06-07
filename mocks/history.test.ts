@@ -4,7 +4,9 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   createHistoryDetailErrorHandler,
   createHistoryDetailInvalidIdHandler,
+  createHistoryDetailMalformedHandler,
   createHistoryDetailNotFoundHandler,
+  createHistoryDetailRetryToSuccessHandler,
   createHistoryDetailSuccessHandler,
   createHistoryListEmptyHandler,
   createHistoryListErrorHandler,
@@ -96,4 +98,27 @@ describe("analysis history detail handlers", () => {
       expect(await response.json()).toEqual(historyErrorResponses[key]);
     },
   );
+
+  it("returns malformed success bodies for client validation tests", async () => {
+    server.use(createHistoryDetailMalformedHandler());
+
+    const response = await fetch(`${origin}/api/analyses/42`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ malformed: true });
+  });
+
+  it("can fail once and then return the detail fixture", async () => {
+    server.use(createHistoryDetailRetryToSuccessHandler());
+
+    const firstResponse = await fetch(`${origin}/api/analyses/42`);
+    const secondResponse = await fetch(`${origin}/api/analyses/42`);
+
+    expect(firstResponse.status).toBe(500);
+    expect(await firstResponse.json()).toEqual(
+      historyErrorResponses.processingError,
+    );
+    expect(secondResponse.status).toBe(200);
+    expect(await secondResponse.json()).toEqual(historyDetail);
+  });
 });
