@@ -135,6 +135,26 @@ Get analysis history.
 }
 ```
 
+### Error Response (`500 Internal Server Error`)
+
+```json
+{
+  "message": "Analysis history request failed."
+}
+```
+
+### Error Response (`405 Method Not Allowed`)
+
+Unsupported methods return:
+
+```json
+{
+  "message": "Method not allowed."
+}
+```
+
+The response includes `Allow: GET`.
+
 ## GET /api/analyses/:id
 
 Get analysis detail.
@@ -161,13 +181,41 @@ Get analysis detail.
 }
 ```
 
+### Error Response (`400 Bad Request`)
+
+```json
+{
+  "message": "Analysis id is invalid."
+}
+```
+
 ### Error Response (`404 Not Found`)
 
 ```json
 {
-  "message": "분석 결과를 찾을 수 없습니다."
+  "message": "Analysis result was not found."
 }
 ```
+
+### Error Response (`500 Internal Server Error`)
+
+```json
+{
+  "message": "Analysis history request failed."
+}
+```
+
+### Error Response (`405 Method Not Allowed`)
+
+Unsupported methods return:
+
+```json
+{
+  "message": "Method not allowed."
+}
+```
+
+The response includes `Allow: GET`.
 
 ## POST /api/automations/run
 
