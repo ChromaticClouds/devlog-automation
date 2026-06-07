@@ -95,3 +95,27 @@ export function createHistoryDetailErrorHandler() {
     HttpResponse.json(historyErrorResponses.processingError, { status: 500 }),
   );
 }
+
+export function createHistoryDetailMalformedHandler() {
+  return http.get(HISTORY_DETAIL_API_PATH, () =>
+    HttpResponse.json({ malformed: true }),
+  );
+}
+
+export function createHistoryDetailRetryToSuccessHandler(
+  detail: AnalysisDetail = historyDetail,
+) {
+  let attempts = 0;
+
+  return http.get(HISTORY_DETAIL_API_PATH, () => {
+    attempts += 1;
+
+    if (attempts === 1) {
+      return HttpResponse.json(historyErrorResponses.processingError, {
+        status: 500,
+      });
+    }
+
+    return HttpResponse.json(detail);
+  });
+}
