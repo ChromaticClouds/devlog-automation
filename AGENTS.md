@@ -69,7 +69,11 @@ Examples:
 4. Do not rewrite unrelated files.
 5. Do not introduce new libraries without explaining why.
 6. Do not commit secrets, `.env` files, tokens, API keys, or local DB files.
-7. Do not push unless explicitly instructed.
+7. When a user asks to execute a harness task, complete the full cycle by
+   default: create or update the task branch, implement, verify, commit, push,
+   and open a PR. Stop before commit, push, or PR only when verification fails,
+   secrets or unsafe files would be included, destructive git operations are
+   required, or the user explicitly asks to pause before those steps.
 8. When a source file exceeds 200 lines, or a change would push it past 200
    lines, prefer splitting focused types, helpers, or tests into separate files.
    Keep an oversized file only when the split would reduce clarity, and explain
