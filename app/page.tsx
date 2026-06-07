@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AnalysisContainer } from "@/components/analysis/analysis-container";
 
 const workflowItems = [
@@ -45,6 +47,12 @@ export default function Home() {
               boundary. Build-time rendering stays quiet; live GitHub, Gemini,
               and PostgreSQL work only starts after a user submits a URL.
             </p>
+            <Link
+              className="mt-4 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
+              href="/analyses"
+            >
+              View previous analyses
+            </Link>
           </div>
         </div>
 

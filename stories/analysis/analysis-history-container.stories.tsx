@@ -79,6 +79,18 @@ export const Populated: Story = {
   },
 };
 
+export const DetailLinksHidden: Story = {
+  args: { showDetailLinks: false },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(
+      await canvas.findByRole("region", { name: "Analysis history" }),
+    ).toBeInTheDocument();
+    await expect(canvas.queryByRole("link")).not.toBeInTheDocument();
+  },
+};
+
 export const Empty: Story = {
   args: { fetchHistory: emptyFetch },
   parameters: { msw: { handlers: [createHistoryListEmptyHandler()] } },
