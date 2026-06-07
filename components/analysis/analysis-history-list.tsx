@@ -29,6 +29,7 @@ type AnalysisHistoryListProps = {
   onRetry?: () => void;
   getDetailHref?: (id: number) => string;
   formatCreatedAt?: (createdAt: string) => string;
+  showDetailLinks?: boolean;
 };
 
 function defaultDetailHref(id: number): string {
@@ -64,6 +65,7 @@ export function AnalysisHistoryList({
   onRetry,
   getDetailHref = defaultDetailHref,
   formatCreatedAt = defaultFormatCreatedAt,
+  showDetailLinks = true,
 }: AnalysisHistoryListProps) {
   if (state.status === "loading") {
     return (
@@ -127,13 +129,15 @@ export function AnalysisHistoryList({
               {item.summary}
             </p>
           </CardContent>
-          <CardFooter>
-            <Button asChild variant="outline">
-              <Link href={getDetailHref(item.id)}>
-                View {item.repositoryName} analysis
-              </Link>
-            </Button>
-          </CardFooter>
+          {showDetailLinks ? (
+            <CardFooter>
+              <Button asChild variant="outline">
+                <Link href={getDetailHref(item.id)}>
+                  View {item.repositoryName} analysis
+                </Link>
+              </Button>
+            </CardFooter>
+          ) : null}
         </Card>
       ))}
     </section>
