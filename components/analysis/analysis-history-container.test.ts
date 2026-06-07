@@ -55,7 +55,7 @@ describe("fetchAnalysisHistory", () => {
     );
   });
 
-  it("uses the fallback for malformed JSON and unknown failures", async () => {
+  it("uses the fallback for malformed JSON", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(new Response("not json", { status: 500 })),
@@ -64,5 +64,24 @@ describe("fetchAnalysisHistory", () => {
     await expect(fetchAnalysisHistory()).rejects.toThrow(
       "Analysis history request failed.",
     );
+  });
+
+  it("normalizes rejected fetches without exposing network details", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockRejectedValue(new TypeError("secret service worker failure")),
+    );
+
+    try {
+      await fetchAnalysisHistory();
+      throw new Error("Expected history fetch to fail.");
+    } catch (error) {
+      expect(error).toMatchObject({
+        message: "Analysis history request failed.",
+      });
+      expect(String(error)).not.toContain("secret");
+    }
   });
 });

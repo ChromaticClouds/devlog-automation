@@ -58,7 +58,14 @@ export function validateAnalysisHistoryItems(
 }
 
 export async function fetchAnalysisHistory(): Promise<AnalysisHistoryItem[]> {
-  const response = await fetch("/api/analyses");
+  let response: Response;
+
+  try {
+    response = await fetch("/api/analyses");
+  } catch {
+    throw new Error(FALLBACK_ERROR_MESSAGE);
+  }
+
   const body: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
