@@ -67,7 +67,31 @@ Analyze a GitHub repository.
 
 ```json
 {
-  "message": "올바른 GitHub Repository URL을 입력해주세요."
+  "message": "Analyze request body is invalid."
+}
+```
+
+Invalid repository URLs use:
+
+```json
+{
+  "message": "GitHub repository URL is invalid."
+}
+```
+
+### Error Response (`404 Not Found`)
+
+```json
+{
+  "message": "GitHub repository was not found."
+}
+```
+
+### Error Response (`429 Too Many Requests`)
+
+```json
+{
+  "message": "Repository analysis rate limit was exceeded."
 }
 ```
 
@@ -75,9 +99,21 @@ Analyze a GitHub repository.
 
 ```json
 {
-  "message": "저장소 분석 중 오류가 발생했습니다."
+  "message": "Repository analysis failed."
 }
 ```
+
+### Error Response (`405 Method Not Allowed`)
+
+Unsupported methods return:
+
+```json
+{
+  "message": "Method not allowed."
+}
+```
+
+The response includes `Allow: POST`.
 
 ## GET /api/analyses
 
