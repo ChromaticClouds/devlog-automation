@@ -9,6 +9,9 @@ import {
   type GitHubRepository,
 } from "../github/repository-url";
 import {
+  MAX_NORMALIZED_COMMITS,
+  MAX_NORMALIZED_ISSUES,
+  MAX_NORMALIZED_PULL_REQUESTS,
   normalizeGitHubActivity,
   type NormalizeGitHubActivityInput,
   type NormalizedGitHubActivity,
@@ -112,9 +115,9 @@ export async function orchestrateRepositoryAnalysis(
   try {
     const [commits, pullRequests, issues, readme, packageMetadata] =
       await Promise.all([
-        dependencies.fetchCommits(repository),
-        dependencies.fetchPullRequests(repository),
-        dependencies.fetchIssues(repository),
+        dependencies.fetchCommits(repository, MAX_NORMALIZED_COMMITS),
+        dependencies.fetchPullRequests(repository, MAX_NORMALIZED_PULL_REQUESTS),
+        dependencies.fetchIssues(repository, MAX_NORMALIZED_ISSUES),
         dependencies.fetchReadme(repository),
         dependencies.fetchPackageMetadata(repository),
       ]);
