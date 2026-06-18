@@ -123,6 +123,27 @@ describe("normalizeGitHubActivity", () => {
         url: "https://github.com/ChromaticClouds/devlog-automation",
       },
       stats: {
+        sample: {
+          scope: "recent_collected_activity_sample",
+          countsRepresent: "collected_sample_only",
+          interpretationGuidance:
+            "Counts describe only the recent collected sample, not repository-wide or lifetime activity.",
+          commits: {
+            kind: "commits",
+            sampledCount: 1,
+            collectionLimit: MAX_NORMALIZED_COMMITS,
+          },
+          pullRequests: {
+            kind: "pullRequests",
+            sampledCount: 3,
+            collectionLimit: MAX_NORMALIZED_PULL_REQUESTS,
+          },
+          issues: {
+            kind: "issues",
+            sampledCount: 2,
+            collectionLimit: MAX_NORMALIZED_ISSUES,
+          },
+        },
         commitCount: 1,
         pullRequestCount: 3,
         openPullRequestCount: 1,
@@ -213,6 +234,27 @@ describe("normalizeGitHubActivity", () => {
     expect(activity.readme).toBeNull();
     expect(activity.packageMetadata).toBeNull();
     expect(activity.stats).toEqual({
+      sample: {
+        scope: "recent_collected_activity_sample",
+        countsRepresent: "collected_sample_only",
+        interpretationGuidance:
+          "Counts describe only the recent collected sample, not repository-wide or lifetime activity.",
+        commits: {
+          kind: "commits",
+          sampledCount: 0,
+          collectionLimit: MAX_NORMALIZED_COMMITS,
+        },
+        pullRequests: {
+          kind: "pullRequests",
+          sampledCount: 0,
+          collectionLimit: MAX_NORMALIZED_PULL_REQUESTS,
+        },
+        issues: {
+          kind: "issues",
+          sampledCount: 0,
+          collectionLimit: MAX_NORMALIZED_ISSUES,
+        },
+      },
       commitCount: 0,
       pullRequestCount: 0,
       openPullRequestCount: 0,
@@ -271,6 +313,53 @@ describe("normalizeGitHubActivity", () => {
     expect(activity.stats.commitCount).toBe(MAX_NORMALIZED_COMMITS);
     expect(activity.stats.pullRequestCount).toBe(MAX_NORMALIZED_PULL_REQUESTS);
     expect(activity.stats.issueCount).toBe(MAX_NORMALIZED_ISSUES);
+    expect(activity.stats.sample.commits).toEqual({
+      kind: "commits",
+      sampledCount: MAX_NORMALIZED_COMMITS,
+      collectionLimit: MAX_NORMALIZED_COMMITS,
+    });
+    expect(activity.stats.sample.pullRequests).toEqual({
+      kind: "pullRequests",
+      sampledCount: MAX_NORMALIZED_PULL_REQUESTS,
+      collectionLimit: MAX_NORMALIZED_PULL_REQUESTS,
+    });
+    expect(activity.stats.sample.issues).toEqual({
+      kind: "issues",
+      sampledCount: MAX_NORMALIZED_ISSUES,
+      collectionLimit: MAX_NORMALIZED_ISSUES,
+    });
+  });
+
+  it("marks zero merged pull requests as sampled activity only", () => {
+    const activity = normalizeGitHubActivity({
+      repository,
+      commits: [],
+      pullRequests: [1167, 1165, 1159].map((number) => ({
+        number,
+        title: `sample open pull request ${number}`,
+        state: "open",
+        authorLogin: "ChromaticClouds",
+        createdAt: "2026-06-18T08:00:00Z",
+        updatedAt: "2026-06-18T08:30:00Z",
+        mergedAt: null,
+        url: `https://github.com/pull/${number}`,
+      })),
+      issues: [],
+      readme: null,
+      packageMetadata: null,
+    });
+
+    expect(activity.stats.pullRequestCount).toBe(3);
+    expect(activity.stats.mergedPullRequestCount).toBe(0);
+    expect(activity.stats.sample.pullRequests).toEqual({
+      kind: "pullRequests",
+      sampledCount: 3,
+      collectionLimit: MAX_NORMALIZED_PULL_REQUESTS,
+    });
+    expect(activity.stats.sample.countsRepresent).toBe("collected_sample_only");
+    expect(activity.stats.sample.interpretationGuidance).toContain(
+      "not repository-wide or lifetime activity",
+    );
   });
 
   it("caps prompt-facing package metadata collections and text fields", () => {

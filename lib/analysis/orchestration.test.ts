@@ -2,7 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { GitHubClientError } from "../github/client";
 import type { GitHubRepository } from "../github/repository-url";
-import type { NormalizedGitHubActivity } from "./activity";
+import {
+  MAX_NORMALIZED_COMMITS,
+  MAX_NORMALIZED_ISSUES,
+  MAX_NORMALIZED_PULL_REQUESTS,
+  type NormalizedGitHubActivity,
+} from "./activity";
 import { GeminiAnalysisError } from "./gemini";
 import {
   orchestrateRepositoryAnalysis,
@@ -83,6 +88,18 @@ describe("orchestrateRepositoryAnalysis", () => {
     releaseCollectors();
 
     await expect(analysis).resolves.toBe(stored);
+    expect(dependencies.fetchCommits).toHaveBeenCalledWith(
+      repository,
+      MAX_NORMALIZED_COMMITS,
+    );
+    expect(dependencies.fetchPullRequests).toHaveBeenCalledWith(
+      repository,
+      MAX_NORMALIZED_PULL_REQUESTS,
+    );
+    expect(dependencies.fetchIssues).toHaveBeenCalledWith(
+      repository,
+      MAX_NORMALIZED_ISSUES,
+    );
     expect(dependencies.normalizeActivity).toHaveBeenCalledWith({
       repository,
       commits: [],
