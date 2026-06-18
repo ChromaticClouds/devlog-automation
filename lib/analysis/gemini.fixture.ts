@@ -7,6 +7,27 @@ export const geminiActivityFixture: NormalizedGitHubActivity = {
     url: "https://github.com/ChromaticClouds/devlog-automation",
   },
   stats: {
+    sample: {
+      scope: "recent_collected_activity_sample",
+      countsRepresent: "collected_sample_only",
+      interpretationGuidance:
+        "Counts describe only the recent collected sample, not repository-wide or lifetime activity.",
+      commits: {
+        kind: "commits",
+        sampledCount: 1,
+        collectionLimit: 20,
+      },
+      pullRequests: {
+        kind: "pullRequests",
+        sampledCount: 1,
+        collectionLimit: 20,
+      },
+      issues: {
+        kind: "issues",
+        sampledCount: 1,
+        collectionLimit: 20,
+      },
+    },
     commitCount: 1,
     pullRequestCount: 1,
     openPullRequestCount: 0,
