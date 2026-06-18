@@ -4,6 +4,10 @@ import type { GitHubPackageMetadata } from "../github/package-metadata";
 import type { GitHubPullRequest } from "../github/pull-requests";
 import type { GitHubReadme } from "../github/readme";
 import type { GitHubRepository } from "../github/repository-url";
+import {
+  createNormalizedActivityStats,
+  type NormalizedActivityStats,
+} from "./activity-stats";
 
 export const MAX_NORMALIZED_COMMITS = 20;
 export const MAX_NORMALIZED_PULL_REQUESTS = 20;
@@ -80,20 +84,6 @@ export type NormalizedPackageSummary = {
   dependencyNames: string[];
   devDependencyNames: string[];
 } | null;
-
-export type NormalizedActivityStats = {
-  commitCount: number;
-  pullRequestCount: number;
-  openPullRequestCount: number;
-  closedPullRequestCount: number;
-  mergedPullRequestCount: number;
-  issueCount: number;
-  openIssueCount: number;
-  closedIssueCount: number;
-  scriptCount: number;
-  dependencyCount: number;
-  devDependencyCount: number;
-};
 
 export type NormalizedGitHubActivity = {
   repository: NormalizedRepositorySummary;
@@ -303,33 +293,6 @@ function normalizePackageMetadata(
   };
 }
 
-function getStats(
-  commits: NormalizedCommitSummary[],
-  pullRequests: NormalizedPullRequestSummary[],
-  issues: NormalizedIssueSummary[],
-  packageMetadata: NormalizedPackageSummary,
-): NormalizedActivityStats {
-  return {
-    commitCount: commits.length,
-    pullRequestCount: pullRequests.length,
-    openPullRequestCount: pullRequests.filter(
-      (pullRequest) => pullRequest.state === "open",
-    ).length,
-    closedPullRequestCount: pullRequests.filter(
-      (pullRequest) => pullRequest.state === "closed",
-    ).length,
-    mergedPullRequestCount: pullRequests.filter(
-      (pullRequest) => pullRequest.isMerged,
-    ).length,
-    issueCount: issues.length,
-    openIssueCount: issues.filter((issue) => issue.state === "open").length,
-    closedIssueCount: issues.filter((issue) => issue.state === "closed").length,
-    scriptCount: packageMetadata?.scriptNames.length ?? 0,
-    dependencyCount: packageMetadata?.dependencyNames.length ?? 0,
-    devDependencyCount: packageMetadata?.devDependencyNames.length ?? 0,
-  };
-}
-
 export function normalizeGitHubActivity(
   input: NormalizeGitHubActivityInput,
 ): NormalizedGitHubActivity {
@@ -345,7 +308,17 @@ export function normalizeGitHubActivity(
       name: trimText(input.repository.name),
       url: trimText(input.repository.url),
     },
-    stats: getStats(commits, pullRequests, issues, packageMetadata),
+    stats: createNormalizedActivityStats({
+      commits,
+      pullRequests,
+      issues,
+      packageMetadata,
+      limits: {
+        commits: MAX_NORMALIZED_COMMITS,
+        pullRequests: MAX_NORMALIZED_PULL_REQUESTS,
+        issues: MAX_NORMALIZED_ISSUES,
+      },
+    }),
     commits,
     pullRequests,
     issues,
